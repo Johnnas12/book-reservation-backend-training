@@ -1,42 +1,44 @@
-name: Build, Test and Deploy
+name: Run Jest Tests
 
+# Trigger on push and pull_request to main branch
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
-    
 permissions:
   contents: write  
-  pages: write
-  id-token: write
+  pull-requests: write
+  id-token: write  
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest  
+
+    # MongoDB service for database-dependent tests
+    services:
+      mongodb:
+        image: mongo:latest  
+        ports:
+          - 27017:27017  
 
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm'  # Cache npm dependencies for faster runs
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run Tests
-        run: npm test
-
-      - name: Build Project
-        run: npm run build
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages      
-          folder: build       
+      - name: Run Jest Tests
+        run: npx jest test/register.test.js
+        env:
+          MONGO_URI: mongodb://localhost:27017/testdb
